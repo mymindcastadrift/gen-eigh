@@ -71,15 +71,7 @@ std::vector<double> generate_random_matrix(const int m, const int n, const doubl
 	return A;
 }
 
-/*std::vector<double> get_transpose(const std::vector<double> *A, const int m, const int n)
-{
-	std::vector<double> Ah(m*n);
-	for (int row = 0; row < n; row++)
-		for (int col = 0; col < m; col++)
-			Ah[row*m + col] = (*A)[col*m + row];
 
-	return Ah;
-}*/
 
 int main(int argc, char** argv){
 
@@ -130,11 +122,19 @@ int main(int argc, char** argv){
 	// Eigenvalue problem GZ = lambda Z
 	std::vector<double> eigenval(N);
 	char jobz = 'V';
-	// What is LWORK and WORK??
-	// # WORK = pointer to double. Will output with the computed size
-	// # LWORK = ptr to -1
+	int lwork = -1;
+	double lwork_dbl;
+	BLAS(dsyev)( &jobz, &uplo, &N, G.data(), &N, eigenval.data(), &lwork_dbl, &lwork, &info );
+	lwork = (int)lwork_dbl;
+	std::vector<double> work(lwork);
+	BLAS(dsyev)( &jobz, &uplo, &N, G.data(), &N, eigenval.data(), &lwork_dbl, &lwork, &info )
+
+	Print(G, N, N, "G is");
 
 	// Triangular solve to obtain original eigenvalues: L*X = Z
+	side = "L"; uplo = "L"; transA = "N"; diag = "N"; alpha = 1; 
+	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, L.data(), &N, G.data(), &N );
 
+	print(G, N, N, "G is")
 
 }
