@@ -15,6 +15,9 @@
 # define BLAS(name) name
 #endif
 
+
+// BLAS function symbols ===============================
+
 extern "C" 
 {
 	void BLAS(dgemm)
@@ -44,6 +47,9 @@ extern "C"
 	);
 }
 
+
+// Helper functions ======================
+
 template<typename T>
 void Print
 ( const std::vector<T>& A, int m, int n, const std::string msg="matrix" )
@@ -71,7 +77,60 @@ std::vector<double> generate_random_matrix(const int m, const int n, const doubl
 	return A;
 }
 
+/*double error(std::vector<double> *A, std::vector<double> *M, int N, std::vector<double> *eigenval, std::vector<double> *eigenvect){
+	double err;
+	vector<double> err_array(N);
 
+	return err;
+}*/
+
+// Cholesky-Wilkinson Function =====================
+int choleskywilkinson(std::vector<double> A, std::vector<double> M, int N, std::vector<double> *eigenval, std::vector<double> *eigenvect)
+{
+	// Cholesky Factorization of M = LL*. L is stored in M;
+	char uplo = 'L';
+	int info;
+	BLAS(dpotrf)( &uplo, &N, M.data(), &N, &info );
+
+	Print (M, N, N, "L is");
+
+	// Triangular solve to obtain G = L-1 A L-*
+	// (1) Solve S s.t. LX = A
+	// (2) Solve Y s.t. YL* = S
+	char side = 'L', diag = 'N', transA = 'N';
+	uplo = 'L';
+	double alpha = 1; 
+	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, M.data(), &N, A.data(), &N );
+
+	side = 'R'; transA = 'T';
+	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, M.data(), &N, A.data(), &N );
+
+	Print(A, N, N, "G is");
+
+	// Eigenvalue problem GZ = lambda Z
+	char jobz = 'V';
+	int lwork = -1;
+	double lwork_dbl;
+	BLAS(dsyev)( &jobz, &uplo, &N, A.data(), &N, eigenval->data(), &lwork_dbl, &lwork, &info );
+	lwork = (int)lwork_dbl;
+	std::vector<double> work(lwork);
+	BLAS(dsyev)( &jobz, &uplo, &N, A.data(), &N, eigenval->data(), work.data(), &lwork, &info );
+
+	Print(A, N, N, "modified eigenvect is");
+
+	// Triangular solve to obtain original eigenvalues: L*X = Z
+	side = 'L'; uplo = 'L'; transA = 'N'; diag = 'N'; alpha = 1; 
+	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, M.data(), &N, A.data(), &N );
+
+	Print (*eigenval, 1, N, "eigenval is");
+	Print(A, N, N, "eigenvect is");
+
+	*eigenvect = A;
+	return 0;
+}
+
+
+// Unit Testing ==================================================
 
 int main(int argc, char** argv){
 
@@ -94,47 +153,13 @@ int main(int argc, char** argv){
 	Print(A, N, N, "A is");
 	Print(M, N, N, "M is");
 
-	// Cholesky Factorization of M = LL*
-	std::vector<double> L(N*N);
-	L = M;
-	char uplo = 'L';
-	int info;
-	BLAS(dpotrf)( &uplo, &N, L.data(), &N, &info );
-
-	std::cout << "Info: " << info << std::endl;
-	Print (L, N, N, "L is");
-
-	// Triangular solve to obtain G = L-1 A L-*
-	// (1) Solve S s.t. LX = A
-	// (2) Solve Y s.t. YL* = S
-	std::vector<double>G(N*N);
-	G = A;
-	char side = 'L', diag = 'N';
-	uplo = 'L'; transA = 'N';
-	alpha = 1; 
-	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, L.data(), &N, G.data(), &N );
-
-	side = 'R'; transA = 'T';
-	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, L.data(), &N, G.data(), &N );
-
-	Print(G, N, N, "G is");
-
-	// Eigenvalue problem GZ = lambda Z
+	// Calling Cholesky-Wilkinson
 	std::vector<double> eigenval(N);
-	char jobz = 'V';
-	int lwork = -1;
-	double lwork_dbl;
-	BLAS(dsyev)( &jobz, &uplo, &N, G.data(), &N, eigenval.data(), &lwork_dbl, &lwork, &info );
-	lwork = (int)lwork_dbl;
-	std::vector<double> work(lwork);
-	BLAS(dsyev)( &jobz, &uplo, &N, G.data(), &N, eigenval.data(), &lwork_dbl, &lwork, &info )
+	std::vector<double> eigenvect(N*N);
+	choleskywilkinson(A, M, N, &eigenval, &eigenvect);
 
-	Print(G, N, N, "G is");
 
-	// Triangular solve to obtain original eigenvalues: L*X = Z
-	side = "L"; uplo = "L"; transA = "N"; diag = "N"; alpha = 1; 
-	BLAS(dtrsm)( &side, &uplo, &transA, &diag, &N, &N, &alpha, L.data(), &N, G.data(), &N );
 
-	print(G, N, N, "G is")
+	return 0;
 
 }
