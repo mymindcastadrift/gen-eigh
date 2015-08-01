@@ -23,8 +23,6 @@ def fix_heiberger(A,M, r, cond = True):
 
 	# Deflation Procedure M
 	index = find_contraction_index(d, r)
-	#print "d:" , d
-	#print "index:", index, "length:", dim
 	d[index:] = [0 for e in d[index:]]
 	A = Gh * A * G
 	d_root_inv = 1/np.sqrt(d[0:index])
@@ -45,14 +43,11 @@ def fix_heiberger(A,M, r, cond = True):
 		
 		# Spectral Decompose submatrix of A
 		# Deflation Proedure on A_22
-
 		A_22 = A[index:dim, index:dim]
 		[F, z, Fh] = linalg.svd(A_22)
 		index_a = find_contraction_index(z, r)
-		#print "index_a:", index_a
 
 		z[index_a:] = [0 for e in z[index_a:]]
-		#print "z:", z
 
 		U = np.matrix(linalg.block_diag(np.diag(d_root_inv), F))
 		Z = U.getH()*A*U
@@ -91,7 +86,6 @@ def fix_heiberger(A,M, r, cond = True):
 			B[0:index, index+index_a:dim] = np.zeros((index, dim - index - index_a))
 			B[0:len(s), index+index_a: index+index_a+len(s)] = np.diag(s)
 			B[index+index_a:dim, 0:index] = np.matrix(B[0:index, index+index_a:dim]).getH()
-			#print "B:", B
 
 			# Solve the equivalent problem
 			B_22 = B[index_b: index, index_b: index]
@@ -118,14 +112,6 @@ def fix_heiberger(A,M, r, cond = True):
 	
 
 # Testing -----------------------------------------------------------------
-
-def rand_symm_matrices(n, range_m = 10, range_a = 100):
-	M = (2*np.matlib.rand(n,n) - 1)*range_m
-	M = M.getH() * M
-	A = (2*np.matlib.rand(n,n) - 1)*range_a
-	A = (A + A.getH())/2
-	return (A,M)
-
 
 
 def column_vect_norms(X):
