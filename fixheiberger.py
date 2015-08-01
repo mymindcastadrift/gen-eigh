@@ -1,27 +1,18 @@
 import numpy as np
 import numpy.matlib
 from scipy import linalg
+from choleskywilkinson import cholesky_wilkinson
 
 # Preliminary, unoptimized implementation of Fix-Heiberger Algorithm
 
 def find_contraction_index(eigenval, r):
 	a, b, index = 0, sum(eigenval), 0
 	for i in range(len(eigenval)):
-		a = a + eigenval[i]
-		b = b - eigenval[i]
-		if b < r*a :
-			index = i+1
+		index = i
+		if eigenval[i] < r * eigenval[0]:
 			return index
-
-# There is an inconsistency between how M is contracted and how submatrices of A are contracted later. Is this a typo in the book?
-def find_contraction_index_2(eigenval, r):
-	a, b, index = 0, linalg.norm(eigenval)**2, 0
-	for i in range(len(eigenval)):
-		a = a + eigenval[i]**2
-		b = b - eigenval[i]**2
-		if b < (r**2)* a:
-			index = i+1
-			return index
+	index = index + 1
+	return index
 
 def fix_heiberger(A,M, r, cond = True):
 
@@ -36,19 +27,18 @@ def fix_heiberger(A,M, r, cond = True):
 	#print "index:", index, "length:", dim
 	d[index:] = [0 for e in d[index:]]
 	A = Gh * A * G
-
 	d_root_inv = 1/np.sqrt(d[0:index])
 
 	if (index > dim - 1 ):
 		
 		# If M is well-conditioned, simply solve the newly decomposed problem.
-		#print "Case 1"
+		print "Case 1"
 		F = np.matlib.identity(dim-index)
 		U = np.matrix(linalg.block_diag(np.diag(d_root_inv), F))
 		Z = U.getH()*A*U
 		[eigenval, eigenvect] = linalg.eigh(Z)
 
-		# TODO: Reconstruct eigenvectors
+		# Reconstruct eigenvectors
 		return eigenval, G * eigenvect
 
 	else:
@@ -58,7 +48,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		A_22 = A[index:dim, index:dim]
 		[F, z, Fh] = linalg.svd(A_22)
-		index_a = find_contraction_index_2(z, r)
+		index_a = find_contraction_index(z, r)
 		#print "index_a:", index_a
 
 		z[index_a:] = [0 for e in z[index_a:]]
@@ -70,14 +60,14 @@ def fix_heiberger(A,M, r, cond = True):
 
 		if (index_a > A_22.shape[0]-1):
 			
-			#print "Case 2"
+			print "Case 2"
 			# When A_22 is well-conditioned
 			A_12 = Z[0:index, index:dim]
 			A_11 = Z[0:index, 0:index]
 			Psi_inv = np.diag(1/z)
 			[eigenval, x_1] = linalg.eigh(A_11 - A_12 * Psi_inv * A_12.getH())
 
-			# TODO: Reconstruct eigenvectors
+			# Reconstruct eigenvectors
 			z_inv = 1/z[0:index_a]
 			x_2 = -np.diag(z_inv)* A_12.getH() * x_1
 			eigenvect = np.concatenate((x_1,x_2), axis=0)
@@ -85,14 +75,14 @@ def fix_heiberger(A,M, r, cond = True):
 
 		else:
 
-			#print "Case 3"
+			print "Case 3"
 
 			# General case: Possibly singular A_13
 			A_13 = Z[0:index, index + index_a: dim]
 			#print "A_13:", A_13
 
 			[Q,s,Ph] = linalg.svd(A_13)
-			index_b = find_contraction_index_2(s,r)
+			index_b = find_contraction_index(s,r)
 			s[index_b:] = [0 for e in s[index_b:]]
 			I = np.matlib.identity(index_a)
 			V = np.matrix(linalg.block_diag(Q, I, (np.matrix(Ph)).getH()))
@@ -136,14 +126,7 @@ def rand_symm_matrices(n, range_m = 10, range_a = 100):
 	A = (A + A.getH())/2
 	return (A,M)
 
-def cholesky_wilkinson(A, M): #A and M are both NumPy Matrix Objects
-	L =  np.matrix(linalg.cholesky(M))
-	S = np.matrix(linalg.solve_triangular(L, A))   # S = LG
-	G = (np.matrix(linalg.solve_triangular(L, S.getH()))).getH()
-	[eigenval, eigenvect] = linalg.eigh(G)
-	eigenvect = np.matrix(linalg.solve_triangular(L, eigenvect, trans = 'C'))
-	eigenval = np.matrix(eigenval)
-	return (eigenval, eigenvect)
+
 
 def column_vect_norms(X):
 	norm =[]
@@ -160,12 +143,12 @@ def average_error(A, M, eigenval, eigenvect):
 if __name__ == "__main__":
 
 	[A, M] = rand_symm_matrices(1000)
-	[eigenval, eigenvect] = fix_heiberger(A,M, 0.0001)
+	[eigenval, eigenvect] = fix_heiberger(A,M, 0.1)
 	[test_val, test_vect] = cholesky_wilkinson(A,M)
 	print "Fix-Heiberger: ", average_error(A,M, eigenval, eigenvect)
 	print "Cholesky-Wilkinson: ", average_error(A,M, test_val, test_vect)
 
-	fp = open("testresult.csv", 'w')
+	'''fp = open("testresult.csv", 'w')
 	print "Beginning Testing ... "
 	for n in range(1,100):
 		fp.write("{}".format(n*10))
@@ -177,4 +160,4 @@ if __name__ == "__main__":
 			err_2 = average_error(A, M, test_val, test_vect)
 			fp.write(",{},{}".format(err_1, err_2))
 		fp.write("\n")
-	fp.close()
+	fp.close()''' 
