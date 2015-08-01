@@ -22,7 +22,7 @@ def average_error(A, M, eigenval, eigenvect):
 
 if __name__ == "__main__":
 
-	[A, M] = matgen.rand_symm_matrices(1000)
+	[A, M] = matgen.rand_matrix_pair(1000)
 	[eigenval, eigenvect] = fix_heiberger(A,M, 0.1)
 	[test_val, test_vect] = cholesky_wilkinson(A,M)
 	print "Fix-Heiberger: ", average_error(A,M, eigenval, eigenvect)
