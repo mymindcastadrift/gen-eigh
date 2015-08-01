@@ -12,29 +12,23 @@ def rand_semidef_symm(n, range_m = 10):
 	M = M.getH() * M
 	return M
 
-def rand_diag(n, range_d = 1000, return_list = False):
-	v = (2*np.random.rand(n) - 1) * range_d
-	if return_list:
-		return np.diag(v), v
-	else:
-		return np.diag(v)
-
-def rand_semidef_diag(n, range_d = 1000, return_list = False):
-	v = np.random.rand(n) * range_d
-	if return_list:
-		return np.diag(v), v
-	else:
-		return np.diag(v)
-
 def rand_unitary(n):
 	A = 2*np.matlib.rand(n,n) - 1
-	[Q,R] = linalg.qr(A, overwrite_a = true)
+	[Q,R] = linalg.qr(A, overwrite_a = True)
 	return np.matrix(Q)
 
-def rand_matrix_pair(n, range_m = 10, range_a = 100):
+def rand_pair(n, range_m = 10, range_a = 100):
 	return rand_symm(n, range_a), rand_semidefinite_symm(n, range_m)
 
-def rand_matrix_by_eigenval(n, eigenval):
+def rand_by_eigenval(n, eigenval):
 	Q = rand_unitary(n)
 	D = np.diag(eigenval)
 	return Q.getH() * D * Q
+
+def diag(z):
+	return np.matrix(np.diag(z))
+
+def rand_eigenval(n, range_low = 0, range_high = 1000, return_list = False):
+	z = np.random.rand(n)
+	z = [i *(range_high - range_low) + range_low for i in z]
+	return z

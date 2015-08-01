@@ -30,7 +30,7 @@ def fix_heiberger(A,M, r, cond = True):
 	if (index > dim - 1 ):
 		
 		# If M is well-conditioned, simply solve the newly decomposed problem.
-		print "Case 1"
+		#print "Case 1"
 		F = np.matlib.identity(dim-index)
 		U = np.matrix(linalg.block_diag(np.diag(d_root_inv), F))
 		Z = U.getH()*A*U
@@ -55,7 +55,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		if (index_a > A_22.shape[0]-1):
 			
-			print "Case 2"
+			#print "Case 2"
 			# When A_22 is well-conditioned
 			A_12 = Z[0:index, index:dim]
 			A_11 = Z[0:index, 0:index]
@@ -70,7 +70,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		else:
 
-			print "Case 3"
+			#print "Case 3"
 
 			# General case: Possibly singular A_13
 			A_13 = Z[0:index, index + index_a: dim]
@@ -109,41 +109,3 @@ def fix_heiberger(A,M, r, cond = True):
 			eigenvect = np.concatenate((x_1, x_2, x_3, x_4, x_5), axis = 0)
 			return eigenval, V * U * G * eigenvect
 
-	
-
-# Testing -----------------------------------------------------------------
-
-
-def column_vect_norms(X):
-	norm =[]
-	for i in range(X.shape[1]):
-		x = linalg.norm(X[:,i])
-		norm.append(x)
-	return norm
-
-def average_error(A, M, eigenval, eigenvect):
-	err_matrix = A.dot(eigenvect) - np.multiply(eigenval, M.dot(eigenvect))
-	norm = column_vect_norms(err_matrix)
-	return sum(norm)/len(norm)
-
-if __name__ == "__main__":
-
-	[A, M] = rand_symm_matrices(1000)
-	[eigenval, eigenvect] = fix_heiberger(A,M, 0.1)
-	[test_val, test_vect] = cholesky_wilkinson(A,M)
-	print "Fix-Heiberger: ", average_error(A,M, eigenval, eigenvect)
-	print "Cholesky-Wilkinson: ", average_error(A,M, test_val, test_vect)
-
-	'''fp = open("testresult.csv", 'w')
-	print "Beginning Testing ... "
-	for n in range(1,100):
-		fp.write("{}".format(n*10))
-		for r in range (1,5):
-			[A, M] = rand_symm_matrices(10*n)
-			[eigenval, eigenvect] = fix_heiberger(A,M, 0.00001)
-			[test_val, test_vect] = cholesky_wilkinson(A,M)
-			err_1 = average_error(A, M , eigenval, eigenvect)
-			err_2 = average_error(A, M, test_val, test_vect)
-			fp.write(",{},{}".format(err_1, err_2))
-		fp.write("\n")
-	fp.close()''' 
