@@ -2,7 +2,7 @@ import numpy as np
 import numpy.matlib
 from scipy import linalg
 
-import matrixgenerator as mat_gen
+import matrixgenerator as matgen
 from choleskywilkinson import cholesky_wilkinson
 from fixheiberger import fix_heiberger
 
@@ -22,7 +22,7 @@ def average_error(A, M, eigenval, eigenvect):
 
 if __name__ == "__main__":
 
-	[A, M] = rand_symm_matrices(1000)
+	[A, M] = matgen.rand_symm_matrices(1000)
 	[eigenval, eigenvect] = fix_heiberger(A,M, 0.1)
 	[test_val, test_vect] = cholesky_wilkinson(A,M)
 	print "Fix-Heiberger: ", average_error(A,M, eigenval, eigenvect)
