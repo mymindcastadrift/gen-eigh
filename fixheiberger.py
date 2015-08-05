@@ -2,29 +2,57 @@ import numpy as np
 import numpy.matlib
 from scipy import linalg
 from choleskywilkinson import cholesky_wilkinson
+import matrixgenerator as matgen
 
 # Preliminary, unoptimized implementation of Fix-Heiberger Algorithm
 
+# Helper Functions ==================================================
 def find_contraction_index(eigenval, r):
 	a, b, index = 0, sum(eigenval), 0
 	for i in range(len(eigenval)):
 		index = i
-		if eigenval[i] < r * eigenval[0]:
+		if abs(eigenval[i]) < r * abs(eigenval[0]):
 			return index
 	index = index + 1
 	return index
+
+def sort_eigenval(eigenvect, eigenval): 
+
+	def getkey(item):
+		return abs(item[0])
+
+	tuples = []
+	for i in range(len(eigenval)):
+		tuples.append([eigenval[i],i])
+	tuples = sorted(tuples, key = getkey, reverse = True)
+
+	G = []
+	for i in range(len(eigenval)):
+		eigenval[i] = tuples[i][0]
+		G.append(eigenvect[tuples[i][1],:])
+	G = np.matrix(G)
+	eigenvect = G
+
+	# Construct array of tupes
+	# Comparator function
+	# Construct new eigenvect G matrix
+
+
+# Main Algorithm =====================================================
 
 def fix_heiberger(A,M, r, cond = True):
 
 	# Spectral Decompose M. Find G -> Use SVD or Schur?
 	# [D,G] = linalg.schur(M) - Does not sort by eigenvalues.
-	[G,d,Gh] = linalg.svd(M)
+	[d,G] = linalg.eigh(M)
 	dim = len(d)
+	sort_eigenval(G,d)
+	G = np.matrix(G)
 
 	# Deflation Procedure M
 	index = find_contraction_index(d, r)
 	d[index:] = [0 for e in d[index:]]
-	A = Gh * A * G
+	A = G.getH()* A * G
 	d_root_inv = 1/np.sqrt(d[0:index])
 
 	if (index > dim - 1 ):
@@ -44,7 +72,8 @@ def fix_heiberger(A,M, r, cond = True):
 		# Spectral Decompose submatrix of A
 		# Deflation Proedure on A_22
 		A_22 = A[index:dim, index:dim]
-		[F, z, Fh] = linalg.svd(A_22)
+		[z,F] = linalg.eigh(A_22)
+		sort_eigenval(F,z)
 		index_a = find_contraction_index(z, r)
 
 		z[index_a:] = [0 for e in z[index_a:]]
@@ -108,4 +137,13 @@ def fix_heiberger(A,M, r, cond = True):
 
 			eigenvect = np.concatenate((x_1, x_2, x_3, x_4, x_5), axis = 0)
 			return eigenval, V * U * G * eigenvect
+
+
+#  Unit Testing =============================
+if __name__ == "__main__":
+
+	M = matgen.rand_symm(10)
+	[d,G] = linalg.eigh(M)
+	dim = len(d)
+	sort_eigenval(G,d)
 
