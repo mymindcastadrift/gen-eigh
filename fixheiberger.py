@@ -26,12 +26,11 @@ def sort_eigenval(eigenvect, eigenval):
 		tuples.append([eigenval[i],i])
 	tuples = sorted(tuples, key = getkey, reverse = True)
 
-	G = []
+	G = np.zeros((len(eigenval), len(eigenval)))
 	for i in range(len(eigenval)):
 		eigenval[i] = tuples[i][0]
-		G.append(eigenvect[tuples[i][1],:])
-	G = np.matrix(G)
-	eigenvect = G
+		G[:,i] = eigenvect[:, tuples[i][1]]
+	return np.matrix(G)
 
 	# Construct array of tupes
 	# Comparator function
@@ -46,8 +45,7 @@ def fix_heiberger(A,M, r, cond = True):
 	# [D,G] = linalg.schur(M) - Does not sort by eigenvalues.
 	[d,G] = linalg.eigh(M)
 	dim = len(d)
-	sort_eigenval(G,d)
-	G = np.matrix(G)
+	G = sort_eigenval(G,d)
 
 	# Deflation Procedure M
 	index = find_contraction_index(d, r)
@@ -58,7 +56,7 @@ def fix_heiberger(A,M, r, cond = True):
 	if (index > dim - 1 ):
 		
 		# If M is well-conditioned, simply solve the newly decomposed problem.
-		#print "Case 1"
+		print "Case 1"
 		F = np.matlib.identity(dim-index)
 		U = np.matrix(linalg.block_diag(np.diag(d_root_inv), F))
 		Z = U.getH()*A*U
@@ -73,7 +71,7 @@ def fix_heiberger(A,M, r, cond = True):
 		# Deflation Proedure on A_22
 		A_22 = A[index:dim, index:dim]
 		[z,F] = linalg.eigh(A_22)
-		sort_eigenval(F,z)
+		F = sort_eigenval(F,z)
 		index_a = find_contraction_index(z, r)
 
 		z[index_a:] = [0 for e in z[index_a:]]
@@ -84,7 +82,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		if (index_a > A_22.shape[0]-1):
 			
-			#print "Case 2"
+			print "Case 2"
 			# When A_22 is well-conditioned
 			A_12 = Z[0:index, index:dim]
 			A_11 = Z[0:index, 0:index]
@@ -99,7 +97,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		else:
 
-			#print "Case 3"
+			print "Case 3"
 
 			# General case: Possibly singular A_13
 			A_13 = Z[0:index, index + index_a: dim]
@@ -142,8 +140,34 @@ def fix_heiberger(A,M, r, cond = True):
 #  Unit Testing =============================
 if __name__ == "__main__":
 
-	M = matgen.rand_symm(10)
-	[d,G] = linalg.eigh(M)
-	dim = len(d)
-	sort_eigenval(G,d)
+	def run_test(A,M, r):
 
+		[fh_val, fh_vect] = fix_heiberger(A,M,r)
+		[cw_val, cw_vect] = cholesky_wilkinson(A,M)
+		print "Fix-Heiberger: ", fh_val, " with error: ", average_error(A,M, fh_val, fh_vect)
+		print "Cholesky-Wilkinson: ", cw_val, " with error: ", average_error(A,M, cw_val, cw_vect)
+
+	def test_correct(n):
+
+		print "Testing with dimensions:", n
+
+		z = range(1,n+1)
+		z = [i+0.01 for i in z]
+		A = matgen.rand_by_eigenval(n, z[::-1])
+		M = matgen.diag([1]*n)
+		
+		run_test(A,M,0.01)
+
+	def column_vect_norms(X):
+		norm =[]
+		for i in range(X.shape[1]):
+			x = linalg.norm(X[:,i])
+			norm.append(x)
+		return norm
+
+	def average_error(A, M, eigenval, eigenvect):
+		err_matrix = A.dot(eigenvect) - np.multiply(eigenval, M.dot(eigenvect))
+		norm = column_vect_norms(err_matrix)
+		return sum(norm)/len(norm)
+
+	test_correct(100)

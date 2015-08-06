@@ -2,6 +2,10 @@ import numpy as np
 import numpy.matlib
 from scipy import linalg
 
+def rand_mat(n,m, range_low = -1000, range_high=1000):
+	A = np.matlib.rand(n,m)*(range_high-range_low) + range_low
+	return np.matrix(A)
+
 def rand_symm(n, range_a = 100):
 	A = (2*np.matlib.rand(n,n) - 1)*range_a
 	A = (A + A.getH())/2
@@ -28,7 +32,7 @@ def rand_by_eigenval(n, eigenval):
 def diag(z):
 	return np.matrix(np.diag(z))
 
-def rand_eigenval(n, range_low = 0, range_high = 1000, return_list = False):
+def rand_eigenval(n, range_low = 0, range_high = 1000):
 	z = np.random.rand(n)
 	z = [i *(range_high - range_low) + range_low for i in z]
 	return z
