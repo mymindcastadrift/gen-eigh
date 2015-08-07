@@ -6,6 +6,19 @@ import matrixgenerator as matgen
 
 # Preliminary, unoptimized implementation of Fix-Heiberger Algorithm
 
+def column_vect_norms(X):
+	norm =[]
+	for i in range(X.shape[1]):
+		x = linalg.norm(X[:,i])
+		norm.append(x)
+	return norm
+
+def average_error(A, M, eigenval, eigenvect):
+	err_matrix = A.dot(eigenvect) - np.multiply(eigenval, M.dot(eigenvect))
+	norm = column_vect_norms(err_matrix)
+	return sum(norm)/len(norm)
+
+
 # Helper Functions ==================================================
 def find_contraction_index(eigenval, r):
 	a, b, index = 0, sum(eigenval), 0
@@ -47,6 +60,9 @@ def fix_heiberger(A,M, r, cond = True):
 	dim = len(d)
 	G = sort_eigenval(G,d)
 
+	#I = np.matlib.identity(dim)
+	#print "Step 1 Error:", average_error(M, I, d, G)
+
 	# Deflation Procedure M
 	index = find_contraction_index(d, r)
 	d[index:] = [0 for e in d[index:]]
@@ -57,13 +73,12 @@ def fix_heiberger(A,M, r, cond = True):
 		
 		# If M is well-conditioned, simply solve the newly decomposed problem.
 		print "Case 1"
-		F = np.matlib.identity(dim-index)
-		U = np.matrix(linalg.block_diag(np.diag(d_root_inv), F))
+		U = np.matrix(np.diag(d_root_inv))
 		Z = U.getH()*A*U
 		[eigenval, eigenvect] = linalg.eigh(Z)
 
 		# Reconstruct eigenvectors
-		return eigenval, G * eigenvect
+		return eigenval, G * U * eigenvect
 
 	else:
 		
@@ -143,31 +158,13 @@ if __name__ == "__main__":
 	def run_test(A,M, r):
 
 		[fh_val, fh_vect] = fix_heiberger(A,M,r)
-		[cw_val, cw_vect] = cholesky_wilkinson(A,M)
-		print "Fix-Heiberger: ", fh_val, " with error: ", average_error(A,M, fh_val, fh_vect)
-		print "Cholesky-Wilkinson: ", cw_val, " with error: ", average_error(A,M, cw_val, cw_vect)
+		[def_val, def_vect] = linalg.eigh(A,M)
+		print "Fix-Heiberger with error: ", average_error(A,M, fh_val, fh_vect)
+		print "Scipy with error: ", average_error(A,M, def_val, def_vect), "\n"
 
-	def test_correct(n):
+	# Testing for Case 1 Performance
 
-		print "Testing with dimensions:", n
-
-		z = range(1,n+1)
-		z = [i+0.01 for i in z]
-		A = matgen.rand_by_eigenval(n, z[::-1])
-		M = matgen.diag([1]*n)
-		
-		run_test(A,M,0.01)
-
-	def column_vect_norms(X):
-		norm =[]
-		for i in range(X.shape[1]):
-			x = linalg.norm(X[:,i])
-			norm.append(x)
-		return norm
-
-	def average_error(A, M, eigenval, eigenvect):
-		err_matrix = A.dot(eigenvect) - np.multiply(eigenval, M.dot(eigenvect))
-		norm = column_vect_norms(err_matrix)
-		return sum(norm)/len(norm)
-
-	test_correct(100)
+	for i in range(2,8):
+		A = matgen.rand_symm(20*i)
+		M = matgen.rand_semidef_symm(20*i)
+		run_test(A,M,0.0000001)
