@@ -7,13 +7,11 @@ from scipy import linalg
 
 def cholesky_wilkinson(A, M): #A and M are both NumPy Matrix Objects
 	L =  np.matrix(linalg.cholesky(M))
-	S = np.matrix(linalg.solve_triangular(L, A))   # S = LG
-	G = (np.matrix(linalg.solve_triangular(L, S.getH()))).getH()
+	S = np.matrix(linalg.solve_triangular(L, A))   # S = L-1 A    Lh X
+	G = (np.matrix(linalg.solve_triangular(L, S.getH()))).getH()  # G = S L-H   Lh X
 	[eigenval, eigenvect] = linalg.eigh(G)
-	eigenvect = np.matrix(linalg.solve_triangular(L, eigenvect, trans = 'C'))
-	eigenval = np.matrix(eigenval)
-	return (eigenval, eigenvect)
-
+	eigenvect = np.matrix(linalg.solve_triangular(L, eigenvect, trans = 'T')) # Eigenvect = L-H Lh X
+	return eigenval, eigenvect
 
 
 # Key Areas of Improvement:

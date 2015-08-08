@@ -16,6 +16,9 @@ def rand_semidef_symm(n, range_m = 10):
 	M = M.getH() * M
 	return M
 
+def rand_by_eigenrange(n, range_low = 0, range_high =1000):
+	return rand_by_eigenval(n, rand_eigenval(n, range_low, range_high))
+
 def rand_unitary(n):
 	A = 2*np.matlib.rand(n,n) - 1
 	[Q,R] = linalg.qr(A, overwrite_a = True)
