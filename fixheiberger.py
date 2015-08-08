@@ -76,7 +76,7 @@ def fix_heiberger(A,M, r, cond = True):
 	if (n_1> dim - 1 ):
 		
 		# If M is well-conditioned, simply solve the newly decomposed problem.
-		print "Case 1"
+		#print "Case 1"
 		[eigenval, eigenvect] = linalg.eigh(A)
 
 		# Reconstruct eigenvectors
@@ -99,7 +99,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		if (n_3 > len(z)-1):
 			
-			print "Case 2"
+			#print "Case 2"
 			# When A_22 is well-conditioned
 			A_12 = A[0:n_1, n_1:dim]
 			A_11 = A[0:n_1, 0:n_1]
@@ -113,7 +113,7 @@ def fix_heiberger(A,M, r, cond = True):
 
 		else:
 
-			print "Case 3"
+			#print "Case 3"
 
 			# General case: Possibly singular A_13
 			# TODO Assert n_1 < dim - n_1 - n_3
@@ -121,45 +121,27 @@ def fix_heiberger(A,M, r, cond = True):
 			n_4 = dim - n_1 - n_3
 			if n_1 < n_4: 
 				print "WARNING: EXCESSIVE TOLERANCE RESTRICTIONS IN n_4"
-			[Q_11,A_14] = linalg.qr(A_13, mode = "economic")
+			[Q_11,A_14] = linalg.qr(A_13, mode = "full")
 			Q = np.matrix(linalg.block_diag(Q_11, np.identity(dim - n_1)))
 
 			A = Q.getH() * A * Q
-
-			
-
-			'''[Q,s,Ph] = linalg.svd(A_13)
-			index_b = find_contraction_index(s,r)
-			s[index_b:] = [0 for e in s[index_b:]]
-			I = np.matlib.identity(index_a)
-			V = np.matrix(linalg.block_diag(Q, I, (np.matrix(Ph)).getH()))
-			
-			A = V * A * V.getH()
-			A[0:index, index+index_a:dim] = np.zeros((index, dim - index - index_a))
-			A[0:len(s), index+index_a: index+index_a+len(s)] = np.diag(s)
-			A[index+index_a:dim, 0:index] = np.matrix(A[0:index, index+index_a:dim]).getH()
-
 			# Solve the equivalent problem
-			B_22 = A[index_b: index, index_b: index]
-			B_23 = A[index_b: index, index: index+index_a]
-			Psi_inv = np.diag(1/z[0:index_a])
+			B_22 = A[n_4: n_1, n_4: n_1]
+			B_23 = A[n_4: n_1, n_1: n_1 + n_3]
+			Psi_inv = np.diag(1/z[0:n_3])
 			[eigenval, x_2] = linalg.eigh(B_22 - B_23 * Psi_inv * B_23.getH())
 
 			# Reconstruct Eigenvectors
-			x_1 = np.zeros((index_b, len(eigenval)))
+			x_1 = np.zeros((n_4, len(eigenval)))
+			x_3 = -Psi_inv* B_23.getH() * x_2
 
-			z_inv = 1/z[0:index_a]
-			x_3 = -np.diag(z_inv)* B_23.getH() * x_2
+			B_12 = A[0:n_4, n_4: n_1]
+			B_13 = A[0:n_4, n_1: n_1 + n_3]
+			B_14 = A[0:n_4, n_1 + n_3:dim]
+			x_4 = linalg.solve_triangular(B_14, -(B_12*x_2 + B_13*x_3))
 
-			s_inv = 1/s[0:index_b]
-			B_12 = A[0:index_b, index_b: index]
-			B_13 = A[0:index_b, index: index + index_a]
-			x_4 = -np.diag(s_inv) * (B_12*x_2 + B_13*x_3)
-
-			x_5 = np.zeros((dim - index - index_a - index_b, len(eigenval)))
-
-			eigenvect = np.concatenate((x_1, x_2, x_3, x_4, x_5), axis = 0)
-			return eigenval, V * U * G * eigenvect'''
+			eigenvect = np.concatenate((x_1, x_2, x_3, x_4), axis = 0)
+			return eigenval, G * D * U *Q *eigenvect
 
 
 #  Unit Testing =============================
@@ -172,7 +154,7 @@ if __name__ == "__main__":
 		[cw_val, cw_vect] = cholesky_wilkinson(A,M)
 		print "Fix-Heiberger with error: ", average_error(A,M, fh_val, fh_vect)
 		print "Cholesky-Wilkinson with error: ", average_error(A,M, cw_val, cw_vect)
-		print "Scipy with error: ", average_error(A,M, def_val, def_vect), "\n"
+		print "Scipy with error: ", average_error(A,M, def_val, def_vect),  "\n"
 
 	# Testing for Case 1 Performance
 	print "Testing Case 1 \n"
@@ -192,5 +174,5 @@ if __name__ == "__main__":
 	print "Testing Case 3\n"
 	for i in range(2,8):
 		A = matgen.rand_symm(100*i)
-		M = matgen.rand_by_eigenrange(100*i, 0,10000000)
+		M = matgen.rand_by_eigenrange(100*i, 0,100000000)
 		run_test(A,M, 0.1)

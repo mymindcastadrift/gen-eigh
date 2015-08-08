@@ -25,7 +25,7 @@ def rand_unitary(n):
 	return np.matrix(Q)
 
 def rand_pair(n, range_m = 10, range_a = 100):
-	return rand_symm(n, range_a), rand_semidefinite_symm(n, range_m)
+	return rand_symm(n, range_a), rand_semidef_symm(n, range_m)
 
 def rand_by_eigenval(n, eigenval):
 	Q = rand_unitary(n)

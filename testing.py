@@ -28,9 +28,9 @@ def run_test(A,M, r):
 	[fh_val, fh_vect] = fix_heiberger(A,M,r)
 	[cw_val, cw_vect] = cholesky_wilkinson(A,M)
 	[def_val, def_vect] = linalg.eigh(A,M)
-	print "Fix-Heiberger: ", fh_val, " with error: ", average_error(A,M, fh_val, fh_vect)
-	print "Cholesky-Wilkinson: ", cw_val, " with error: ", average_error(A,M, cw_val, cw_vect)
-	print "Scipy: ", def_val, " with error: ", average_error(A,M, def_val, def_vect)
+	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect)#, "\n", fh_val
+	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect)#, "\n", cw_val
+	print "Scipy: with error: ", average_error(A,M, def_val, def_vect), "\n", #def_val, "\n"
 
 def test_correct_1(n):
 
@@ -81,9 +81,9 @@ def test_correct_5(n,w):
 	A[0:n, n:n+w] = A_13
 	A[n:n+w, 0:n] = A_13.getH()
 
-	M =linalg.block_diag( matgen.diag(matgen.rand_eigenval(n,100,1000)), matgen.diag([0.01]*w))
+	M =linalg.block_diag( matgen.diag(matgen.rand_eigenval(n,100,1000)), matgen.diag([10**-60]*w))
 
-	run_test(A,M,0.001)
+	run_test(A,M,0.01)
 
 # Unit testing module =====================================================
 
@@ -97,10 +97,12 @@ if __name__ == "__main__":
 	for i in [5,100]:
 		test_correct_2(i)
 
-	print "\nTest 3: Pg 86 test - Limiting values of epsilon and delta"
-	for i in range(50,100):
+	print "\nTest 3: Pg 86 test - Limiting values of epsilon"
+	for i in range(50,60):
 		test_correct_3(0.01, 0.005, 10**(-i))
-	for i in range(50,100):
+
+	print "\nTest 3: Pg 86 test - Limiting values of delta"
+	for i in range(50,60):
 		test_correct_3(0.01, 10**(-i), 0.005)
 	# Note how the latter becomes a pathological input for Fix-Heiberger due to the lack of condition (2.14)
 
@@ -110,26 +112,24 @@ if __name__ == "__main__":
 
 	print "\nTest 5: A_22 with negative values"
 	for i in range(1, 5):
-		test_correct_5(10,5)
+		test_correct_5(10,2)
+	# Note that higher error for "less singular matrices" is expected.
 
-	'''print "\n Test: Higher Dimensional Performance"
-	[A, M] = matgen.rand_matrix_pair(1000)
-	[eigenval, eigenvect] = fix_heiberger(A,M, 0.1)
-	[test_val, test_vect] = cholesky_wilkinson(A,M)
-	print "Fix-Heiberger: ", average_error(A,M, eigenval, eigenvect)
-	print "Cholesky-Wilkinson: ", average_error(A,M, test_val, test_vect)
+	print "\n Test: Higher Dimensional Performance"
+	[A, M] = matgen.rand_pair(1000)
+	run_test(A,M, 0.0001)
 
 	fp = open("testresult.csv", 'w')
 	print "Beginning Testing ... "
 	for n in range(1,100):
 		fp.write("{}".format(n*10))
 		for r in range (1,5):
-			[A, M] = rand_symm_matrices(10*n)
+			[A, M] = matgen.rand_pair(10*n)
 			[eigenval, eigenvect] = fix_heiberger(A,M, 0.00001)
 			[test_val, test_vect] = cholesky_wilkinson(A,M)
 			err_1 = average_error(A, M , eigenval, eigenvect)
 			err_2 = average_error(A, M, test_val, test_vect)
 			fp.write(",{},{}".format(err_1, err_2))
 		fp.write("\n")
-	fp.close()'''
+	fp.close()
 
