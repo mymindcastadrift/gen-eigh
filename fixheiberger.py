@@ -64,16 +64,16 @@ def fix_heiberger(A,M, r, cond = True):
 	#print "Step 1 Error:", average_error(M, I, d, G)
 
 	# Deflation Procedure M
-	index = find_contraction_index(d, r)
-	d[index:] = [0 for e in d[index:]]
+	n_1 = find_contraction_index(d, r)
+	d[n_1:] = [0 for e in d[n_1:]]
 	A = G.getH()* A * G
 	
-	d_root_inv = 1/np.sqrt(d[0:index])
+	d_root_inv = 1/np.sqrt(d[0:n_1])
 	D = np.matrix(np.diag(d_root_inv))
-	D = linalg.block_diag(D, np.identity(dim - index))
+	D = linalg.block_diag(D, np.identity(dim - n_1))
 	A = D*A*D 
 
-	if (index > dim - 1 ):
+	if (n_1> dim - 1 ):
 		
 		# If M is well-conditioned, simply solve the newly decomposed problem.
 		print "Case 1"
@@ -86,23 +86,23 @@ def fix_heiberger(A,M, r, cond = True):
 		
 		# Spectral Decompose submatrix of A
 		# Deflation Proedure on A_22
-		A_22 = A[index:dim, index:dim]
+		A_22 = A[n_1:dim, n_1:dim]
 		[z,F] = linalg.eigh(A_22)
 		F = sort_eigenval(F,z, True)
-		index_a = find_contraction_index(z, r)
+		n_3 = find_contraction_index(z, r)
 
-		z[index_a:] = [0 for e in z[index_a:]]
+		z[n_3:] = [0 for e in z[n_3:]]
 
-		U = np.matrix(linalg.block_diag(np.identity(index), F))
+		U = np.matrix(linalg.block_diag(np.identity(n_1), F))
 		A = U.getH()*A*U
-		A[index: , index: ] = np.diag(z)
+		A[n_1: , n_1: ] = np.diag(z)
 
-		if (index_a > len(z)-1):
+		if (n_3 > len(z)-1):
 			
 			print "Case 2"
 			# When A_22 is well-conditioned
-			A_12 = A[0:index, index:dim]
-			A_11 = A[0:index, 0:index]
+			A_12 = A[0:n_1, n_1:dim]
+			A_11 = A[0:n_1, 0:n_1]
 			Psi_inv = np.diag(1/z)
 			[eigenval, x_1] = linalg.eigh(A_11 - A_12 * Psi_inv * A_12.getH())
 
@@ -116,10 +116,19 @@ def fix_heiberger(A,M, r, cond = True):
 			print "Case 3"
 
 			# General case: Possibly singular A_13
-			# TODO Assert index_a < dim - index - index_a
-			A_13 = Z[0:index, index + index_a: dim]
+			# TODO Assert n_1 < dim - n_1 - n_3
+			A_13 = A[0:n_1, n_1 + n_3: dim]
+			n_4 = dim - n_1 - n_3
+			if n_1 < n_4: 
+				print "WARNING: EXCESSIVE TOLERANCE RESTRICTIONS IN n_4"
+			[Q_11,A_14] = linalg.qr(A_13, mode = "economic")
+			Q = np.matrix(linalg.block_diag(Q_11, np.identity(dim - n_1)))
 
-			[Q,s,Ph] = linalg.svd(A_13)
+			A = Q.getH() * A * Q
+
+			
+
+			'''[Q,s,Ph] = linalg.svd(A_13)
 			index_b = find_contraction_index(s,r)
 			s[index_b:] = [0 for e in s[index_b:]]
 			I = np.matlib.identity(index_a)
@@ -150,7 +159,7 @@ def fix_heiberger(A,M, r, cond = True):
 			x_5 = np.zeros((dim - index - index_a - index_b, len(eigenval)))
 
 			eigenvect = np.concatenate((x_1, x_2, x_3, x_4, x_5), axis = 0)
-			return eigenval, V * U * G * eigenvect
+			return eigenval, V * U * G * eigenvect'''
 
 
 #  Unit Testing =============================
@@ -180,3 +189,8 @@ if __name__ == "__main__":
 		M = matgen.rand_by_eigenrange(100*i, 0,10000000)
 		run_test(A,M, 0.01)
 
+	print "Testing Case 3\n"
+	for i in range(2,8):
+		A = matgen.rand_symm(100*i)
+		M = matgen.rand_by_eigenrange(100*i, 0,10000000)
+		run_test(A,M, 0.1)
