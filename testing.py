@@ -30,7 +30,7 @@ def run_test(A,M, r):
 	[def_val, def_vect] = linalg.eigh(A,M)
 	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect)#, "\n", fh_val
 	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect)#, "\n", cw_val
-	print "Scipy: with error: ", average_error(A,M, def_val, def_vect), "\n", #def_val, "\n"
+	print "Scipy: with error: ", average_error(A,M, def_val, def_vect), "\n"#, def_val, "\n"
 
 def test_correct_1(n):
 
@@ -75,15 +75,20 @@ def test_correct_5(n,w):
 	print "Testing with negative eigenvalues in A_22"
 
 	A_11 = matgen.rand_symm(n)
-	A_22 = matgen.rand_by_eigenval(w, matgen.rand_eigenval(w,-1000,1000))
+	A_22 = matgen.rand_by_eigenval(w, matgen.rand_eigenval(w,-1000,100))
 	A_13 = matgen.rand_mat(n,w)
 	A = linalg.block_diag(A_11, A_22)
 	A[0:n, n:n+w] = A_13
 	A[n:n+w, 0:n] = A_13.getH()
 
-	M =linalg.block_diag( matgen.diag(matgen.rand_eigenval(n,100,1000)), matgen.diag([10**-60]*w))
+	M =linalg.block_diag( matgen.diag(matgen.rand_eigenval(n,100,1000)), matgen.diag([10**-10]*w))
 
 	run_test(A,M,0.01)
+
+def test_correct_6(n,w):
+
+	print "Testing with near singular A"
+
 
 # Unit testing module =====================================================
 
@@ -99,27 +104,37 @@ if __name__ == "__main__":
 
 	print "\nTest 3: Pg 86 test - Limiting values of epsilon"
 	for i in range(50,60):
-		test_correct_3(0.01, 0.005, 10**(-i))
+		test_correct_3(0.01, 0.00001, 10**(-i))
 
 	print "\nTest 3: Pg 86 test - Limiting values of delta"
 	for i in range(50,60):
-		test_correct_3(0.01, 10**(-i), 0.005)
-	# Note how the latter becomes a pathological input for Fix-Heiberger due to the lack of condition (2.14)
+		test_correct_3(0.01, 10**(-i), 0.000001)
 
 	print "\nTest 4: Pg 87 test - Limiting values of delta"
 	for i in range(5, 10):
 		test_correct_4(10**(-i))
+	# Note how the latter claims to be a pathological input for Fix-Heiberger due to the lack of condition (2.14)
+	# BUT THE RANK CONDITION STILL HOLDS!!! n_1 = 2, n_4 = 1
+	# The problem is in trying to solve for a near-singular A_13 with only 1 singular value.
+
 
 	print "\nTest 5: A_22 with negative values"
-	for i in range(1, 5):
-		test_correct_5(10,2)
-	# Note that higher error for "less singular matrices" is expected.
+	for i in range(5, 10):
+		test_correct_5(20*i,10)
 
-	print "\n Test: Higher Dimensional Performance"
+	# Note that higher error for "less singular matrices" is expected since F-H assumes singularity for low eigenvalues.
+
+	print "\nTest 6: Near singular A"
+	for i in range(1,5):
+		test_correct_6(10,2)
+
+	print "\nTest 7: Perturbation Test"
+
+	print "\nTest: Higher Dimensional Performance"
 	[A, M] = matgen.rand_pair(1000)
 	run_test(A,M, 0.0001)
 
-	fp = open("testresult.csv", 'w')
+	"""fp = open("testresult.csv", 'w')
 	print "Beginning Testing ... "
 	for n in range(1,100):
 		fp.write("{}".format(n*10))
@@ -131,5 +146,5 @@ if __name__ == "__main__":
 			err_2 = average_error(A, M, test_val, test_vect)
 			fp.write(",{},{}".format(err_1, err_2))
 		fp.write("\n")
-	fp.close()
+	fp.close()"""
 

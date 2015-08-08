@@ -119,6 +119,7 @@ def fix_heiberger(A,M, r, cond = True):
 			# TODO Assert n_1 < dim - n_1 - n_3
 			A_13 = A[0:n_1, n_1 + n_3: dim]
 			n_4 = dim - n_1 - n_3
+			print n_1, n_4
 			if n_1 < n_4: 
 				print "WARNING: EXCESSIVE TOLERANCE RESTRICTIONS IN n_4"
 			[Q_11,A_14] = linalg.qr(A_13, mode = "full")
