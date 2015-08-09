@@ -28,6 +28,11 @@ def run_test(A,M, r):
 	[fh_val, fh_vect] = fix_heiberger(A,M,r)
 	[cw_val, cw_vect] = cholesky_wilkinson(A,M)
 	[def_val, def_vect] = linalg.eigh(A,M)
+
+	# Excessive tolerance limits error
+	if fh_val == None:
+		return
+
 	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect)#, "\n", fh_val
 	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect)#, "\n", cw_val
 	print "Scipy: with error: ", average_error(A,M, def_val, def_vect), "\n"#, def_val, "\n"
@@ -60,6 +65,15 @@ def test_correct_3(a,d,e):
 
 	run_test(A,M,0.01)
 
+def test_correct_3c(a,d,e):
+
+	print "Testing with alpha, delta, epsilon:", a, d, e
+
+	A = np.matrix([[1,a,0,0,0,d],[a,2,0,0,0,0],[0,0,3,0,0,0],[0,0,0,e,0,0],[0,0,0,0,e,0],[d,0,0,0,0,e]])
+	M = matgen.diag([1,1,e,e,e,e])
+
+	run_test(A,M,0.01)
+
 def test_correct_4(d):
 
 	print "Testing with delta ", d
@@ -69,6 +83,7 @@ def test_correct_4(d):
 	M = matgen.diag([1,1,1,1,d,d,d,d])
 
 	run_test(A,M,0.000011)
+
 
 def test_correct_5(n,w):
 
@@ -102,21 +117,24 @@ if __name__ == "__main__":
 	for i in [5,100]:
 		test_correct_2(i)
 
-	print "\nTest 3: Pg 86 test - Limiting values of epsilon"
+	print "\nTest 3a: Pg 86 test - Limiting values of epsilon"
 	for i in range(50,60):
 		test_correct_3(0.01, 0.00001, 10**(-i))
 
-	print "\nTest 3: Pg 86 test - Limiting values of delta"
+	print "\nTest 3b: Pg 86 test - Limiting values of delta"
 	for i in range(50,60):
 		test_correct_3(0.01, 10**(-i), 0.000001)
-
-	print "\nTest 4: Pg 87 test - Limiting values of delta"
-	for i in range(5, 10):
-		test_correct_4(10**(-i))
 	# Note how the latter claims to be a pathological input for Fix-Heiberger due to the lack of condition (2.14)
 	# BUT THE RANK CONDITION STILL HOLDS!!! n_1 = 2, n_4 = 1
 	# The problem is in trying to solve for a near-singular A_13 with only 1 singular value.
 
+	print "\nTest 3c: Pg 86 test - Limiting values of delta with modified matrix"
+	for i in range(50,60):
+		test_correct_3c(0.01, 10**(-i), 0.000001)
+
+	print "\nTest 4: Pg 87 test - Limiting values of delta"
+	for i in range(5, 10):
+		test_correct_4(10**(-i))
 
 	print "\nTest 5: A_22 with negative values"
 	for i in range(5, 10):
@@ -124,11 +142,11 @@ if __name__ == "__main__":
 
 	# Note that higher error for "less singular matrices" is expected since F-H assumes singularity for low eigenvalues.
 
-	print "\nTest 6: Near singular A"
+	print "\nTest 7: Near singular A"
 	for i in range(1,5):
 		test_correct_6(10,2)
 
-	print "\nTest 7: Perturbation Test"
+	print "\nTest 8: Perturbation Test"
 
 	print "\nTest: Higher Dimensional Performance"
 	[A, M] = matgen.rand_pair(1000)
