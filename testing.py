@@ -67,7 +67,7 @@ def test_correct_3(a,d,e):
 
 def test_correct_3c(a,d,e):
 
-	print "Testing with alpha, delta, epsilon:", a, d, e
+	print "[PATHOLOGICAL] Testing with alpha, delta, epsilon:", a, d, e
 
 	A = np.matrix([[1,a,0,0,0,d],[a,2,0,0,0,0],[0,0,3,0,0,0],[0,0,0,e,0,0],[0,0,0,0,e,0],[d,0,0,0,0,e]])
 	M = matgen.diag([1,1,e,e,e,e])
@@ -100,9 +100,21 @@ def test_correct_5(n,w):
 
 	run_test(A,M,0.01)
 
-def test_correct_6(n,w):
+def test_correct_6(n,w, e):
 
-	print "Testing with near singular A"
+	print "[PATHOLOGICAL] Testing with near singular A with e = ", e
+
+	A_11 = matgen.rand_symm(n)
+	A_22 = matgen.rand_by_eigenval(2*w,  np.concatenate((matgen.rand_eigenval(w, 1000,10000), matgen.rand_eigenval(w, e, 10*e)), axis=1))
+	A = linalg.block_diag(A_11, A_22)
+	A_13 = np.matrix(np.diag(matgen.rand_eigenval(w, e, 10*e)))
+	A[0:w, n+w:n+2*w] = A_13
+	A[n+w:n+2*w, 0:w] = A_13.getH()
+
+	M = matgen.diag(np.concatenate((matgen.rand_eigenval(n,1000,10000), matgen.rand_eigenval(2*w, 0.0001, 0.001)), axis = 1))
+
+
+	run_test(A,M,0.01)
 
 
 # Unit testing module =====================================================
@@ -144,7 +156,7 @@ if __name__ == "__main__":
 
 	print "\nTest 7: Near singular A"
 	for i in range(1,5):
-		test_correct_6(10,2)
+		test_correct_6(100,20, 10**-(10*i))
 
 	print "\nTest 8: Perturbation Test"
 
