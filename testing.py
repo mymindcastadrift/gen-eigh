@@ -47,6 +47,19 @@ def test_correct_1(n):
 	
 	run_test(A,M,0.01)
 
+def test_correct_1a(n):
+
+	print "Testing with dimensions:", n
+
+	z = range(0,n)
+	A = matgen.rand_by_eigenval(n, z[::-1])
+	r = [1]*n
+	r[n-1] = 10**-50
+	M = matgen.diag(r)
+	
+	run_test(A,M,0.01)
+
+
 def test_correct_2(n):
 
 	print "Testing with dimensions:", n
@@ -125,6 +138,10 @@ if __name__ == "__main__":
 	for i in [5,100]:
 		test_correct_1(i)
 
+	print "\nTest 1a: Near singular A,M"
+	for i in [5,100]:
+		test_correct_1a(i)
+
 	print "\nTest 2: Non-singular M"
 	for i in [5,100]:
 		test_correct_2(i)
@@ -138,7 +155,7 @@ if __name__ == "__main__":
 		test_correct_3(0.01, 10**(-i), 0.000001)
 	# Note how the latter claims to be a pathological input for Fix-Heiberger due to the lack of condition (2.14)
 	# BUT THE RANK CONDITION STILL HOLDS!!! n_1 = 2, n_4 = 1
-	# The problem is in trying to solve for a near-singular A_13 with only 1 singular value.
+	# The problem is in trying to solve for a A_13 with near zero singular values.
 
 	print "\nTest 3c: Pg 86 test - Limiting values of delta with modified matrix"
 	for i in range(50,60):

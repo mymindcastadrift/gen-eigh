@@ -109,7 +109,7 @@ def fix_heiberger(A,M, r, cond = True):
 			# Reconstruct eigenvectors
 			x_2 = - Psi_inv * A_12.getH() * np.matrix(x_1)
 			eigenvect = np.concatenate((x_1,x_2), axis=0)
-			print n_1, n_3,
+			#print n_1, n_3,
 			return eigenval, G * D * U * eigenvect
 
 		else:
@@ -143,7 +143,7 @@ def fix_heiberger(A,M, r, cond = True):
 			x_4 = linalg.solve_triangular(B_14, -(B_12*x_2 + B_13*x_3))
 
 			eigenvect = np.concatenate((x_1, x_2, x_3, x_4), axis = 0)
-			print n_1, n_3, n_4
+			#print n_1, n_3, n_4
 			return eigenval, G * D * U *Q *eigenvect
 
 
