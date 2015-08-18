@@ -49,6 +49,10 @@ def sort_eigenval(eigenvect, eigenval, p = False):
 	# Comparator function
 	# Construct new eigenvect G matrix
 
+def normalize(n, eigenvect):
+	for i in range(n):
+		eigenvect[:,i] = eigenvect[:,i]/linalg.norm(eigenvect[:,i])
+
 
 # Main Algorithm =====================================================
 
@@ -78,9 +82,11 @@ def fix_heiberger(A,M, r, cond = True):
 		# If M is well-conditioned, simply solve the newly decomposed problem.
 		#print "Case 1"
 		[eigenval, eigenvect] = linalg.eigh(A)
+		eigenvect = G * D * eigenvect
+		normalize(len(eigenval), eigenvect)
 
 		# Reconstruct eigenvectors
-		return eigenval, G * D * eigenvect
+		return eigenval, eigenvect
 
 	else:
 		
@@ -109,8 +115,11 @@ def fix_heiberger(A,M, r, cond = True):
 			# Reconstruct eigenvectors
 			x_2 = - Psi_inv * A_12.getH() * np.matrix(x_1)
 			eigenvect = np.concatenate((x_1,x_2), axis=0)
-			#print n_1, n_3,
-			return eigenval, G * D * U * eigenvect
+			
+			eigenvect = G * D * U *  eigenvect
+			normalize(len(eigenval), eigenvect)
+
+			return eigenval, eigenvect
 
 		else:
 
@@ -143,9 +152,11 @@ def fix_heiberger(A,M, r, cond = True):
 			x_4 = linalg.solve_triangular(B_14, -(B_12*x_2 + B_13*x_3))
 
 			eigenvect = np.concatenate((x_1, x_2, x_3, x_4), axis = 0)
-			#print n_1, n_3, n_4
-			return eigenval, G * D * U *Q *eigenvect
+			eigenvect = G * D * U *Q *eigenvect
+			normalize(len(eigenval), eigenvect)
 
+			#TODO: NORMALIZE eigenvect
+			return eigenval, eigenvect
 
 #  Unit Testing =============================
 if __name__ == "__main__":

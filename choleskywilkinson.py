@@ -5,12 +5,17 @@ from scipy import linalg
 # Implementation with Triangular_Solve, but no LAPACK wrapped
 # Highly unstable for large dim > 1000
 
+def normalize(n, eigenvect):
+	for i in range(n):
+		eigenvect[:,i] = eigenvect[:,i]/linalg.norm(eigenvect[:,i])
+
 def cholesky_wilkinson(A, M): #A and M are both NumPy Matrix Objects
 	L =  np.matrix(linalg.cholesky(M))
 	S = np.matrix(linalg.solve_triangular(L, A))   # S = L-1 A    Lh X
 	G = (np.matrix(linalg.solve_triangular(L, S.getH()))).getH()  # G = S L-H   Lh X
 	[eigenval, eigenvect] = linalg.eigh(G)
 	eigenvect = np.matrix(linalg.solve_triangular(L, eigenvect, trans = 'T')) # Eigenvect = L-H Lh X
+	normalize(len(eigenval),eigenvect)
 	return eigenval, eigenvect
 
 

@@ -21,6 +21,10 @@ def average_error(A, M, eigenval, eigenvect):
 	norm = column_vect_norms(err_matrix)
 	return sum(norm)/len(norm)
 
+def normalize(n, eigenvect):
+	for i in range(n):
+		eigenvect[:,i] = eigenvect[:,i]/linalg.norm(eigenvect[:,i])
+
 # Basic Correctness Tests ==============================================
 
 def run_test(A,M, r):
@@ -28,13 +32,14 @@ def run_test(A,M, r):
 	[fh_val, fh_vect] = fix_heiberger(A,M,r)
 	[cw_val, cw_vect] = cholesky_wilkinson(A,M)
 	[def_val, def_vect] = linalg.eigh(A,M)
+	normalize(len(def_val), def_vect)
 
 	# Excessive tolerance limits error
 	if fh_val == None:
 		return
 
-	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect)#, "\n", fh_val
-	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect)#, "\n", cw_val
+	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect) #, fh_val, fh_vect
+	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect) #, cw_val
 	print "Scipy: with error: ", average_error(A,M, def_val, def_vect), "\n"#, def_val, "\n"
 
 def test_correct_1(n):
@@ -151,8 +156,8 @@ if __name__ == "__main__":
 		test_correct_3(0.01, 0.00001, 10**(-i))
 
 	print "\nTest 3b: Pg 86 test - Limiting values of delta"
-	for i in range(50,60):
-		test_correct_3(0.01, 10**(-i), 0.000001)
+	for i in range(90,100):
+		test_correct_3(0.00001, 10**(-i), 1e-10)
 	# Note how the latter claims to be a pathological input for Fix-Heiberger due to the lack of condition (2.14)
 	# BUT THE RANK CONDITION STILL HOLDS!!! n_1 = 2, n_4 = 1
 	# The problem is in trying to solve for a A_13 with near zero singular values.
@@ -179,7 +184,7 @@ if __name__ == "__main__":
 
 	print "\nTest: Higher Dimensional Performance"
 	[A, M] = matgen.rand_pair(1000)
-	run_test(A,M, 0.0001)
+	#run_test(A,M, 0.0001)
 
 	"""fp = open("testresult.csv", 'w')
 	print "Beginning Testing ... "
