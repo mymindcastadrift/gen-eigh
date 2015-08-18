@@ -22,12 +22,8 @@ def average_error(A, M, eigenval, eigenvect):
 	return sum(norm)/len(norm)
 
 def normalize(n, eigenvect):
-	print eigenvect
 	for i in range(n):
-		print linalg.norm(eigenvect[:,i])
 		eigenvect[:,i] = eigenvect[:,i]/linalg.norm(eigenvect[:,i])
-
-	print eigenvect
 
 # Basic Correctness Tests ==============================================
 
@@ -184,10 +180,10 @@ if __name__ == "__main__":
 	for i in range(1,5):
 		test_correct_6(100,20, 10**-(10*i))
 
-	print "\nTest 8: Perturbation Test"
+	#print "\nTest 8: Perturbation Test"
 
-	print "\nTest: Higher Dimensional Performance"
-	[A, M] = matgen.rand_pair(1000)
+	#print "\nTest: Higher Dimensional Performance"
+	#[A, M] = matgen.rand_pair(1000)
 	#run_test(A,M, 0.0001)
 
 	"""fp = open("testresult.csv", 'w')
