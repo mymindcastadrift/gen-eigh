@@ -22,8 +22,12 @@ def average_error(A, M, eigenval, eigenvect):
 	return sum(norm)/len(norm)
 
 def normalize(n, eigenvect):
+	print eigenvect
 	for i in range(n):
+		print linalg.norm(eigenvect[:,i])
 		eigenvect[:,i] = eigenvect[:,i]/linalg.norm(eigenvect[:,i])
+
+	print eigenvect
 
 # Basic Correctness Tests ==============================================
 
