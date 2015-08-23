@@ -16,10 +16,10 @@ def column_vect_norms(X):
 		norm.append(x)
 	return norm
 
-def average_error(A, M, eigenval, eigenvect):
+def average_error(A, M, eigenval, eigenvect, n):
 	err_matrix = A.dot(eigenvect) - np.multiply(eigenval, M.dot(eigenvect))
 	norm = column_vect_norms(err_matrix)
-	return sum(norm)/len(norm)
+	return sum(norm[0:n])/n
 
 def normalize(n, eigenvect):
 	for i in range(n):
@@ -38,9 +38,9 @@ def run_test(A,M, r):
 	if fh_val == None:
 		return
 
-	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect) #, fh_val, fh_vect
-	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect) #, cw_val
-	print "Scipy: with error: ", average_error(A,M, def_val, def_vect), "\n"#, def_val, "\n"
+	print "Fix-Heiberger:  with error: ", average_error(A,M, fh_val, fh_vect, len(fh_val)), " on ", len(fh_val), fh_val#, fh_vect
+	print "Cholesky-Wilkinson:  with error: ", average_error(A,M, cw_val, cw_vect, len(fh_val)), len(cw_val), cw_val#, cw_vect
+	print "Scipy: with error: ", average_error(A,M, def_val, def_vect, len(fh_val)), len(def_val), "\n", def_val, "\n"
 
 def test_correct_1(n):
 
@@ -56,11 +56,12 @@ def test_correct_1a(n):
 
 	print "Testing with dimensions:", n
 
-	z = range(0,n)
-	A = matgen.rand_by_eigenval(n, z[::-1])
+	z = range(1,n+1)
+	Q = matgen.rand_unitary(n)
+	A = Q*matgen.diag(z[::-1])*Q.getH()
 	r = [1]*n
-	r[n-1] = 10**-50
-	M = matgen.diag(r)
+	r[n-1:] = [10**-10]*1
+	M = Q*matgen.diag(r)*Q.getH()
 	
 	run_test(A,M,0.01)
 
@@ -70,7 +71,7 @@ def test_correct_2(n):
 	print "Testing with dimensions:", n
 
 	A = matgen.rand_symm(n)
-	M = matgen.rand_by_eigenval(n, matgen.rand_eigenval(n, 1, 10))
+	M = matgen.rand_by_eigenval(n, [1]*n)
 
 	run_test(A,M,0.01)
 
@@ -81,7 +82,7 @@ def test_correct_3(a,d,e):
 	A = np.matrix([[1, a, 0, d],[a, 2, 0, 0], [0,0,3,0],[d,0,0,e]])
 	M = matgen.diag([1,1,e,e])
 
-	run_test(A,M,0.01)
+	run_test(A,M,0.001)
 
 def test_correct_3c(a,d,e):
 
@@ -90,7 +91,7 @@ def test_correct_3c(a,d,e):
 	A = np.matrix([[1,a,0,0,0,d],[a,2,0,0,0,0],[0,0,3,0,0,0],[0,0,0,e,0,0],[0,0,0,0,e,0],[d,0,0,0,0,e]])
 	M = matgen.diag([1,1,e,e,e,e])
 
-	run_test(A,M,0.01)
+	run_test(A,M,0.001)
 
 def test_correct_4(d):
 
@@ -118,9 +119,11 @@ def test_correct_5(n,w):
 
 	run_test(A,M,0.01)
 
-def test_correct_6(n,w, e):
+def test_correct_6(n,w, e, v=3):
 
-	print "[PATHOLOGICAL] Testing with near singular A with e = ", e
+	print "[PATHOLOGICAL] Testing with near singular A with w = ", w
+
+	Q = matgen.rand_unitary(n+2*w)
 
 	A_11 = matgen.rand_symm(n)
 	A_22 = matgen.rand_by_eigenval(2*w,  np.concatenate((matgen.rand_eigenval(w, 1000,10000), matgen.rand_eigenval(w, e, 10*e)), axis=1))
@@ -129,8 +132,10 @@ def test_correct_6(n,w, e):
 	A[0:w, n+w:n+2*w] = A_13
 	A[n+w:n+2*w, 0:w] = A_13.getH()
 
-	M = matgen.diag(np.concatenate((matgen.rand_eigenval(n,1000,10000), matgen.rand_eigenval(2*w, 0.0001, 0.001)), axis = 1))
+	M = matgen.diag(np.concatenate((matgen.rand_eigenval(n,10000,100000), matgen.rand_eigenval(2*w, 0.0001, 0.001)), axis = 1))
 
+	A = Q * A * Q.getH()
+	M = Q * M * Q.getH()
 
 	run_test(A,M,0.01)
 
@@ -139,25 +144,25 @@ def test_correct_6(n,w, e):
 
 if __name__ == "__main__":
 
-	print "\nTest 1: Identity M"
+	'''print "\nTest 1: Identity M"
 	for i in [5,100]:
 		test_correct_1(i)
 
 	print "\nTest 1a: Near singular A,M"
-	for i in [5,100]:
+	for i in range(2,10):
 		test_correct_1a(i)
 
 	print "\nTest 2: Non-singular M"
 	for i in [5,100]:
-		test_correct_2(i)
+		test_correct_2(i)'''
 
-	print "\nTest 3a: Pg 86 test - Limiting values of epsilon"
-	for i in range(50,60):
-		test_correct_3(0.01, 0.00001, 10**(-i))
+	'''print "\nTest 3a: Pg 86 test - Limiting values of epsilon"
+	for i in range(20,50):
+		test_correct_3(0.00001, 0.00005, 10**(-i))'''
 
-	print "\nTest 3b: Pg 86 test - Limiting values of delta"
-	for i in range(90,100):
-		test_correct_3(0.00001, 10**(-i), 1e-10)
+	'''print "\nTest 3b: Pg 86 test - Limiting values of delta"
+	for i in range(10,100):
+		test_correct_3(0.00001, 10**(-i), 0.00001)
 	# Note how the latter claims to be a pathological input for Fix-Heiberger due to the lack of condition (2.14)
 	# BUT THE RANK CONDITION STILL HOLDS!!! n_1 = 2, n_4 = 1
 	# The problem is in trying to solve for a A_13 with near zero singular values.
@@ -168,35 +173,46 @@ if __name__ == "__main__":
 
 	print "\nTest 4: Pg 87 test - Limiting values of delta"
 	for i in range(5, 10):
-		test_correct_4(10**(-i))
+		test_correct_4(10**(-i))'''
 
-	print "\nTest 5: A_22 with negative values"
+	'''print "\nTest 5: A_22 with negative values"
 	for i in range(5, 10):
-		test_correct_5(20*i,10)
+		test_correct_5(20*i,10)'''
 
 	# Note that higher error for "less singular matrices" is expected since F-H assumes singularity for low eigenvalues.
 
-	print "\nTest 7: Near singular A"
+	'''print "\nTest 7: Near singular A"
 	for i in range(1,5):
-		test_correct_6(100,20, 10**-(10*i))
+		test_correct_6(500-40*i,20*i, 10**-50)
 
-	#print "\nTest 8: Perturbation Test"
+	#print "\nTest 8: Perturbation Test"'''
 
-	#print "\nTest: Higher Dimensional Performance"
-	#[A, M] = matgen.rand_pair(1000)
-	#run_test(A,M, 0.0001)
+	print "\nTest: Higher Dimensional Performance"
+	[A, M] = matgen.rand_pair(10)
+	run_test(A,M, 0.0001)
 
-	"""fp = open("testresult.csv", 'w')
+	fp = open("testresult.csv", 'w')
 	print "Beginning Testing ... "
-	for n in range(1,100):
-		fp.write("{}".format(n*10))
-		for r in range (1,5):
-			[A, M] = matgen.rand_pair(10*n)
-			[eigenval, eigenvect] = fix_heiberger(A,M, 0.00001)
-			[test_val, test_vect] = cholesky_wilkinson(A,M)
-			err_1 = average_error(A, M , eigenval, eigenvect)
-			err_2 = average_error(A, M, test_val, test_vect)
-			fp.write(",{},{}".format(err_1, err_2))
+	a = 0.00001
+	d = 0.00005
+	fh_output = [0]*3
+	num_output =[0]*3
+	for i in range(1,101):
+		print i
+		fp.write("{}".format(i*10))
+		#for j in range (10):
+		[A,M] = matgen.rand_pair(i*10)
+		[test_val, test_vect] = cholesky_wilkinson(A,M)
+		err_2 = average_error(A, M, test_val, test_vect, len(test_val))
+		fp.write(",{},".format(err_2))
+		for k in range(1,4):
+			[eigenval, eigenvect] = fix_heiberger(A,M, 10**(-k*2))
+			fh_output[k-1] = average_error(A, M , eigenval, eigenvect, len(eigenval))
+			num_output[k-1] = len(eigenval)
+		for k in range(1,4):
+			fp.write(",{}".format(fh_output[k-1]))
+		for k in range(1,4):
+			fp.write(",{}".format(num_output[k-1]))
 		fp.write("\n")
-	fp.close()"""
+	fp.close()
 
